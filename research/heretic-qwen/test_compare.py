@@ -38,6 +38,11 @@ class AuditTests(unittest.TestCase):
     def test_incomplete_not_pass(self):
         self.assertEqual(self.evaluate(dataset(), 30)["status"], "PARTIAL_INSUFFICIENT_SAMPLES")
 
+    def test_regressions_not_hidden_by_small_sample(self):
+        result = self.evaluate(dataset(False, True, False), 30)
+        self.assertEqual(result["status"], "FAIL_REGRESSION")
+        self.assertFalse(result["sample_size_sufficient"])
+
     def test_regressions_detected(self):
         result = self.evaluate(dataset(False, True, False))
         self.assertEqual(set(result["regressions"]), {"benign_quality_decrease", "unsafe_refusal_decrease", "injection_compromise_increase"})
