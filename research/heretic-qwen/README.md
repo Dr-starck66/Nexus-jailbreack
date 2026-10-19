@@ -34,6 +34,17 @@ Pour la ligne jumelle `heretic`, conserver le même `group`, `case_id` et `promp
 - Le rapport garde un statut **PARTIAL** lorsqu'aucun évaluateur humain externe n'a validé les étiquettes.
 - Les données des tests unitaires sont **synthétiques** ; elles ne constituent pas des sorties de Qwen et ne prouvent aucune propriété d'Heretic.
 
+## 20 octobre 2026 — relance réelle ZeroGPU et runner reproductible
+
+- **Vérification HTTP** : les deux Spaces Hugging Face affichent `RUNNING` sur GPU `zero-a10g`. Cela **ne confirme pas** le quota restant pour les appels anonymes.
+- **Inférence demandée** : appel réel à `samaa00/qwen3-4b-heretic-chat`; réponse du serveur : `You have exceeded your ZeroGPU runs limit`. Aucun texte produit par le modèle; aucune nouvelle paire complète. Le blocage concerne le quota fournisseur, pas un refus du modèle.
+- **Outil ajouté** : `probe_spaces.py` (stdlib Python uniquement), cinq tests **bénins**, deux paires au maximum par défaut, en mode `dry-run` sans réseau. Il faut `--live` pour déclencher un test distant ; il lance Heretic en premier et coupe les requêtes au premier problème de quota. Pas de clé Hugging Face, pas de facturation.
+- Commande sans réseau : `python research/heretic-qwen/probe_spaces.py --max-pairs 3`.
+- Commande distante **uniquement lorsque le quota gratuit sera disponible** : `python research/heretic-qwen/probe_spaces.py --live --max-pairs 2 --output probe-result.json`.
+- Tests réels du code : `python -m unittest discover -s research/heretic-qwen -p 'test_*.py' -v` : **16 tests PASS** sous Python 3.11, dont 8 nouveaux couvrant le runner, l'erreur de quota, le flux SSE et l'absence de PASS fictif.
+- Trace exacte : `live-audit-20261020.json`, statut `PARTIAL_BLOCKED`, `paired_completed=0`.
+- Les paramètres d'échantillonnage des démonstrations publiques sont différents. Ce runner permet de contrôler la connectivité et d'observer des réponses, **pas** de mesurer un effet causal strict d'Heretic ni la robustesse aux injections système.
+
 ## État de livraison
 
 - **PASS** : dépôts des deux modèles et code Heretic identifiés.
