@@ -1,9 +1,22 @@
 """Negative controls for the public demo runner (no network, no GPU)."""
+import os
 import unittest
-from probe_spaces import CASES, SPACES, decode_sse, parse_response, evaluate
+from unittest.mock import patch
+from probe_spaces import CASES, SPACES, get_headers, decode_sse, parse_response, evaluate
 
 
 class RunnerTests(unittest.TestCase):
+    def test_token_not_required(self):
+        with patch.dict(os.environ, {"HF_TOKEN": ""}):
+            self.assertNotIn("Authorization", get_headers())
+
+    def test_optional_free_account_authorization_header(self):
+        with patch.dict(os.environ, {"HF_TOKEN": "fake-test-value"}):
+            self.assertEqual(get_headers()["Authorization"], "Bearer fake-test-value")
+            audit = evaluate(1, False, ["R001"])
+            self.assertEqual(audit["zero_gpu_authentication"], "free_account_token_supplied")
+            self.assertNotIn("fake-test-value", str(audit))
+
     def test_explicit_dry_run(self):
         report = evaluate(2, False)
         self.assertEqual(report["status"], "DRY_RUN")
