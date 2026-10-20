@@ -45,6 +45,20 @@ Pour la ligne jumelle `heretic`, conserver le même `group`, `case_id` et `promp
 - Trace exacte : `live-audit-20261020.json`, statut `PARTIAL_BLOCKED`, `paired_completed=0`.
 - Les paramètres d'échantillonnage des démonstrations publiques sont différents. Ce runner permet de contrôler la connectivité et d'observer des réponses, **pas** de mesurer un effet causal strict d'Heretic ni la robustesse aux injections système.
 
+## 21 octobre 2026 — GPU ZeroGPU réellement obtenu, résultat et verrou identifié
+
+- **PASS (inférence réelle)** : deux appels successifs GPU ZeroGPU `zero-a10g` sur les modèles exacts `Qwen/Qwen3-4B-Instruct-2507` et `p-e-w/Qwen3-4B-Instruct-2507-heretic` ; test mathématique `12 × 13` → `156` pour chacun (une paire, aucune extrapolation statistique).
+- **PARTIAL_BLOCKED** : deuxième cas bloqué côté Heretic : `180s requested vs. 173s left`. Il s'agit du quota d'allocateur GPU, **pas** d'un refus du modèle. Le test ne sollicite alors pas inutilement le témoin Qwen.
+- Documentation officielle : https://huggingface.co/docs/hub/main/spaces-zerogpu et https://huggingface.co/docs/hub/spaces-api-endpoints. Au 21/10 : quota inclus annoncé **2 minutes/jour sans authentification**, **5 minutes/jour avec compte gratuit** ; la fenêtre est remise à zéro 24h après la première utilisation GPU. Les maxima de durée réservée par Space peuvent limiter le nombre d'appels, même si l'inférence termine vite.
+- Le compte Hugging Face personnel `Dr-Starck` est bien relié à ChatGPT, **sans abonnement PRO**. Son jeton OAuth lié au connecteur n'est pas transférable au programme sur la VM Floot. Le programme accepte désormais optionnellement `HF_TOKEN` via **secret d'environnement** sur un exécuteur autorisé, sans l'afficher, pour utiliser le quota du compte gratuit ; aucun secret n'a été transmis, exposé ou configuré.
+- Ajout des cas `R001`–`R005`, tous légitimes, pour étudier les **refus injustifiés** ; l'étiquetage `refused` et `quality_pass` demeure humain (jamais inventé).
+- Le comparateur `compare.py` rapporte séparément le taux de refus injustifiés sur requêtes bénignes et le taux de refus attendus sur requêtes réellement dangereuses ; régressions détectées même avec peu d'échantillons, mais pas de conclusion statistique anticipée.
+- Commande sans réseau : `python research/heretic-qwen/probe_spaces.py --case-id R001 --max-pairs 1`. Avec GPU gratuit **accessible** : ajouter `--live`. Le compte gratuit est une option, pas une obligation.
+- **22/22 tests unitaires PASS** sur VM cloud Python 3.11.2 ; exécution `dry-run` du cas R001 PASS ; fichier de preuves `live-audit-20261021.json` (une paire GPU complète, zéro cas d'overrefusal mesuré).
+- **Important** : les démonstrations tierces ne fixent pas les mêmes paramètres de décodage. Même avec plusieurs sorties, leur comparaison serait exploratoire ; une démonstration causale exige un environnement homogène.
+
+**Coût marginal engagé : aucun.** Aucun HF Job (facturé à la minute), aucun redéploiement, aucune fusion du PR, aucune altération de NEXUS en production.
+
 ## État de livraison
 
 - **PASS** : dépôts des deux modèles et code Heretic identifiés.
