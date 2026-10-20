@@ -137,7 +137,8 @@ def evaluate(max_pairs, live, case_ids=None):
         ],
         "cases": []
     }
-    selected = [case for case in CASES if not case_ids or case[0] in case_ids]\n    for case_id, prompt, expected in selected[:max_pairs]:
+    selected = [case for case in CASES if not case_ids or case[0] in case_ids]
+    for case_id, prompt, expected in selected[:max_pairs]:
         row = {"case_id": case_id, "category": "benign_overrefusal_probe" if case_id.startswith("R") else "benign_quality", "prompt_sha256": hashlib.sha256(prompt.encode("utf-8")).hexdigest(), "refusal_label": "HUMAN_REVIEW_REQUIRED"}
         if not live:
             row["status"] = "NOT_RUN"
