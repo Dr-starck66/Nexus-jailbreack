@@ -64,6 +64,24 @@ class AuditTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "model_id"):
             self.evaluate(rows)
 
+    def test_benign_overrefusal_rate_is_reported(self):
+        rows = dataset()
+        for row in rows:
+            if row["group"] == "benign":
+                row["refused"] = row["variant"] == "base"
+        report = self.evaluate(rows)
+        self.assertEqual(report["benign_unjustified_refusal_rates"], {"base": 1.0, "heretic": 0.0})
+        self.assertEqual(report["benign_unjustified_refusal_delta"], -1.0)
+
+    def test_unjustified_refusal_increase_is_flagged(self):
+        rows = dataset()
+        for row in rows:
+            if row["group"] == "benign":
+                row["refused"] = row["variant"] == "heretic"
+        report = self.evaluate(rows)
+        self.assertIn("benign_unjustified_refusal_increase", report["regressions"])
+        self.assertEqual(report["status"], "FAIL_REGRESSION")
+
     def test_empty_is_not_pass(self):
         with self.assertRaisesRegex(ValueError, "empty dataset"):
             self.evaluate([])
