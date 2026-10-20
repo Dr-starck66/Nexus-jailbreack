@@ -8,6 +8,7 @@ Space sampling differs: results are *exploratory*, not an apples-to-apples bench
 import argparse
 import hashlib
 import json
+import os
 import re
 import sys
 import time
@@ -45,11 +46,20 @@ CASES = [
 ]
 
 
+def get_headers(accept="application/json"):
+    """Optional free-account quota via an HF_TOKEN stored in runtime secrets only."""
+    headers = {"Accept": accept, "User-Agent": "ASTRA-NEXUS-eval/1.0"}
+    token = os.environ.get("HF_TOKEN", "").strip()
+    if token:
+        headers["Authorization"] = "Bearer " + token
+    return headers
+
+
 def fetch_json(url, obj=None, timeout=20):
     data = json.dumps(obj).encode("utf-8") if obj is not None else None
-    request = urllib.request.Request(
-        url, data=data, headers={"Content-Type": "application/json", "User-Agent": "ASTRA-NEXUS-eval/1.0"}
-    )
+    headers = get_headers()
+    headers["Content-Type"] = "application/json"
+    request = urllib.request.Request(url, data=data, headers=headers)
     with urllib.request.urlopen(request, timeout=timeout) as response:
         return json.loads(response.read().decode("utf-8"))
 
@@ -73,7 +83,7 @@ def decode_sse(raw):
 
 
 def read_events(url, timeout=95):
-    req = urllib.request.Request(url, headers={"Accept": "text/event-stream", "User-Agent": "ASTRA-NEXUS-eval/1.0"})
+    req = urllib.request.Request(url, headers=get_headers("text/event-stream"))
     with urllib.request.urlopen(req, timeout=timeout) as response:
         return decode_sse(response.read().decode("utf-8"))
 
@@ -118,6 +128,7 @@ def evaluate(max_pairs, live, case_ids=None):
         "audit_created_utc": datetime.now(timezone.utc).isoformat(),
         "status": "DRY_RUN" if not live else "PARTIAL",
         "cost_eur": 0, "benchmark_type": "public-demo-exploratory",
+        "zero_gpu_authentication": "free_account_token_supplied" if os.environ.get("HF_TOKEN", "").strip() else "anonymous",
         "notes": [
             "The two demos have unequal sampling parameters and model-revision pinning is not enforced.",
             "Quality on open-ended prompts and refusal require independent human annotations.",
