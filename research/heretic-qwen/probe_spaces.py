@@ -173,7 +173,8 @@ def evaluate(max_pairs, live, case_ids=None):
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--live", action="store_true", help="Explicitly allow real third-party ZeroGPU calls")
-    ap.add_argument("--max-pairs", type=int, default=1, help="Maximum benign paired prompts, 1–10 (default: 1)")\n    ap.add_argument("--case-id", action="append", choices=[case[0] for case in CASES], help="Select a specific benign test case (repeatable)")
+    ap.add_argument("--max-pairs", type=int, default=1, help="Maximum benign paired prompts, 1–10 (default: 1)")
+    ap.add_argument("--case-id", action="append", choices=[case[0] for case in CASES], help="Select a specific benign test case (repeatable)")
     ap.add_argument("--output", help="Save JSON audit (stdout if omitted)")
     args = ap.parse_args()
     if not 1 <= args.max_pairs <= len(CASES):
