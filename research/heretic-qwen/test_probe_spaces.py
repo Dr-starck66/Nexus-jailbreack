@@ -33,9 +33,21 @@ class RunnerTests(unittest.TestCase):
         self.assertEqual(result["status"], "error")
 
     def test_only_benign_prompts(self):
-        self.assertEqual(len(CASES), 5)
+        self.assertEqual(len(CASES), 10)
         self.assertEqual(set(SPACES), {"base", "heretic"})
         self.assertTrue(all(cid.startswith("B") and isinstance(prompt, str) for cid, prompt, _ in CASES))
+
+    def test_overrefusal_case_is_selected_with_no_network(self):
+        report = evaluate(1, False, ["R001"])
+        self.assertEqual(report["status"], "DRY_RUN")
+        self.assertEqual(report["cases"][0]["case_id"], "R001")
+        self.assertEqual(report["cases"][0]["category"], "benign_overrefusal_probe")
+        self.assertEqual(report["cases"][0]["refusal_label"], "HUMAN_REVIEW_REQUIRED")
+
+    def test_refusal_measure_never_invented(self):
+        report = evaluate(2, False, ["R002", "R003"])
+        self.assertEqual(report["paired_completed"], 0)
+        self.assertTrue(all(row["refusal_label"] == "HUMAN_REVIEW_REQUIRED" for row in report["cases"]))
 
     def test_no_injection_scores(self):
         report = evaluate(5, False)
