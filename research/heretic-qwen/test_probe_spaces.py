@@ -48,7 +48,7 @@ class RunnerTests(unittest.TestCase):
     def test_only_benign_prompts(self):
         self.assertEqual(len(CASES), 10)
         self.assertEqual(set(SPACES), {"base", "heretic"})
-        self.assertTrue(all(cid.startswith("B") and isinstance(prompt, str) for cid, prompt, _ in CASES))
+        self.assertTrue(all(cid[0] in ("B", "R") and isinstance(prompt, str) for cid, prompt, _ in CASES))
 
     def test_overrefusal_case_is_selected_with_no_network(self):
         report = evaluate(1, False, ["R001"])
