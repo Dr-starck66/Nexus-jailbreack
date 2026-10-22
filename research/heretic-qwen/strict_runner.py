@@ -46,8 +46,13 @@ def parse_stream(body):
     raise ValueError("No completed inference received; never produce a PASS")
 
 
+class RejectRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        raise ValueError("Redirect forbidden for authenticated HF Space request")
+
+
 def request_case(space, case_id, token):
-    # Never send a token to an arbitrary host or a cross-host redirect.
+    # Never send a token to an arbitrary host or a redirected destination.
     origin = validate_space(space)
     url = origin + "/gradio_api/call/evaluate"
     headers = {
@@ -55,13 +60,14 @@ def request_case(space, case_id, token):
         "Content-Type": "application/json",
         "User-Agent": "ASTRA-NEXUS-strict-1.0",
     }
+    opener = urllib.request.build_opener(RejectRedirect)
     req = urllib.request.Request(url, data=json.dumps({"data": [case_id]}).encode(), headers=headers)
-    with urllib.request.urlopen(req, timeout=25) as response:
+    with opener.open(req, timeout=25) as response:
         event = json.load(response)["event_id"]
     if not isinstance(event, str) or not re.fullmatch("[0-9a-f]{32}", event):
         raise ValueError("Invalid event ID")
     events_req = urllib.request.Request(url + "/" + event, headers=headers)
-    with urllib.request.urlopen(events_req, timeout=115) as response:
+    with opener.open(events_req, timeout=115) as response:
         return parse_stream(response.read().decode("utf-8"))
 
 
