@@ -31,12 +31,22 @@ class StrictSpaceContractTests(unittest.TestCase):
     def test_matching_record_has_same_contract(self):
         base = record("base", "R001", "Demonstration output 1")
         heretic = record("heretic", "R001", "Demonstration output 2")
+        # Simulate post-inference records for schema checks; no actual GPU runs here.
+        base["execution"] = "completed_in_space_GPU_function"
+        heretic["execution"] = "completed_in_space_GPU_function"
         result = paired_quality(base, heretic)
         self.assertTrue(result["paired"])
         self.assertFalse(result["quality_scored"])
         self.assertFalse(result["refusal_scored"])
         self.assertEqual(base["contract_sha256"], heretic["contract_sha256"])
         self.assertEqual(base["prompt_sha256"], prompt_hash("R001"))
+
+    def test_synthetic_records_never_count_as_gpu_inference(self):
+        base = record("base", "R001", "Synthetic illustration")
+        heretic = record("heretic", "R001", "Synthetic illustration")
+        report = paired_quality(base, heretic)
+        self.assertFalse(report["paired"])
+        self.assertEqual(report["status"], "UNVERIFIED_NO_GPU_EXECUTION")
 
     def test_reject_unmatched_prompt(self):
         base, heretic = record("base", "R001", ""), record("heretic", "R002", "")
