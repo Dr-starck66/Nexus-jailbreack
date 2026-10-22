@@ -1,0 +1,46 @@
+{
+  "audit_id": "ASTRA-HF-ACCESS-20261023",
+  "status": "PARTIAL_AWAITING_USER_CREDENTIAL",
+  "project": "ASTRA NEXUS Omega Heretic Qwen strict comparison",
+  "cost_eur": 0,
+  "verified": {
+    "huggingface_zero_gpu_free_hosting": "up to two ZeroGPU Spaces for eligible free personal accounts with verified email and account age >30 days",
+    "huggingface_free_account_connected": "Dr-Starck",
+    "connector_permissions": "read only for repository operations; cannot create Spaces",
+    "existing_floot_project_quota": "5/5; new project creation blocked without upgrade",
+    "appdeploy_secure_intake_created": true,
+    "secret_entry_name": "HF_WRITE_TOKEN",
+    "secret_entry_status": "pending_value",
+    "secret_entry_values_visible_to_assistant": false,
+    "hf_spaces_created": 0,
+    "paid_hf_jobs_created": 0,
+    "file_updates": [
+      "research/heretic-qwen/bootstrap_zero_gpu.py",
+      "research/heretic-qwen/test_bootstrap_zero_gpu.py",
+      "research/heretic-qwen/strict_space/README.md"
+    ],
+    "cloud_static_unit_tests": {
+      "passed": 8,
+      "failed": 0,
+      "python_command": "python3 -m unittest discover -s research/heretic-qwen -p test_bootstrap_zero_gpu.py -v"
+    },
+    "dry_run": {
+      "exit_code": 0
+    },
+    "auth_fail_closed": {
+      "exit_code": 2,
+      "message": "BLOCKED: HF_WRITE_TOKEN not available from private secret storage"
+    },
+    "no_paid_hardware_fallback": true
+  },
+  "remaining": {
+    "action_required": "Account holder creates a temporary narrowly scoped HF write token, enters it only in the dedicated encrypted secure intake form; no token should be pasted into chat.",
+    "note": "Encrypted temporary intake is not yet bound to an executable app or Floot server. Do not claim the key is connected or Spaces deployed.",
+    "followup": "After credential submission, attach to isolated backend consumer, provision two ZeroGPU-only Spaces with pinned Qwen versions and validate runtime."
+  },
+  "sources": [
+    "https://huggingface.co/docs/hub/spaces-zerogpu",
+    "https://huggingface.co/docs/hub/security-tokens",
+    "https://huggingface.co/docs/huggingface_hub/main/guides/manage-spaces"
+  ]
+}
