@@ -1,0 +1,82 @@
+{
+  "id": "ASTRA-NEXUS-STRICT-ZEROGPU-20261022",
+  "observed_at_utc": "2026-10-22T22:02:15Z",
+  "requested_goal": "authenticated free ZeroGPU compare Qwen original vs Heretic with identical decoding parameters",
+  "result": "PARTIAL_BLOCKED",
+  "verified": {
+    "account": "Dr-Starck",
+    "connector_authenticated": true,
+    "account_plan": "free",
+    "connected_scopes": [
+      "jobs",
+      "openid",
+      "profile",
+      "read-mcp",
+      "read-repos"
+    ],
+    "hf_spaces_write_from_connector": false,
+    "hf_token_available_in_floot_vm": false,
+    "hf_jobs_running": 0,
+    "model_revisions": {
+      "base": "cdbee75f17c01a7cc42f958dc650907174af0554",
+      "heretic": "bc843daf6f71759bfb52ad69841f7a84aed6dd64"
+    },
+    "strict_contract_sha256": "2a017d258bf1c9a351b3f832ceec7951b740205b3e6b2387babb3e442cc80963",
+    "common_decoding": {
+      "do_sample": false,
+      "num_beams": 1,
+      "max_new_tokens": 96,
+      "repetition_penalty": 1,
+      "use_cache": true
+    },
+    "test_execution": {
+      "external_vm": "Existing Floot DUALITY X V0.3 ECO isolated Node/Python compute environment",
+      "static_compilation_exit_code": 0,
+      "root_unittest_passed": 32,
+      "space_contract_unittest_passed": 13,
+      "total_unit_tests_passed": 45,
+      "unittest_exit_codes": [
+        0,
+        0
+      ],
+      "dry_run_exit_code": 0,
+      "live_gate_without_token_exit_code": 2,
+      "live_gate_message": "PARTIAL_BLOCKED: Cannot execute --live: HF_TOKEN absent from private environment"
+    },
+    "matching_gpu_inferences_this_turn": 0,
+    "real_refusal_rate_samples_this_turn": 0,
+    "no_cost_compute_contract": true
+  },
+  "deployed_to_hf_spaces": false,
+  "public_app_modified": false,
+  "comparison_inference_performed": false,
+  "money_spent_eur": 0,
+  "unresolved": {
+    "blocker": "The authenticated Hugging Face ChatGPT connector does not expose HF_TOKEN to the existing Floot VM and has no create/update Space action.",
+    "deployment_condition": "A secure Space-write connection for the eligible free Hugging Face account, then deploy identical app template into two ZeroGPU Spaces.",
+    "limitation": "Runtime dependencies and actual paired GPU outputs are not verified by static tests."
+  },
+  "files": [
+    "strict_space/benchmark_contract.py",
+    "strict_space/app.py",
+    "strict_space/requirements.txt",
+    "strict_space/README.md",
+    "strict_space/test_benchmark_contract.py",
+    "strict_runner.py",
+    "test_strict_runner.py"
+  ],
+  "controls": [
+    "strict comparison rejects mismatched prompt hash",
+    "pinned model revisions",
+    "greedy identical decode settings",
+    "authenticated token required with no fallback",
+    "redirect refused",
+    "synthetic samples not counted as GPU evidence",
+    "no paid jobs"
+  ],
+  "verified_links": {
+    "draft_pr": "https://github.com/Dr-starck66/Nexus-jailbreack/pull/1",
+    "model_base": "https://huggingface.co/Qwen/Qwen3-4B-Instruct-2507",
+    "model_heretic": "https://huggingface.co/p-e-w/Qwen3-4B-Instruct-2507-heretic"
+  }
+}
