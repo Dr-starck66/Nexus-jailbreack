@@ -96,6 +96,14 @@ def paired_quality(base, heretic):
     for v, row in (("base", base), ("heretic", heretic)):
         if row.get("model_id") != MODELS[v]["id"] or row.get("model_revision") != MODELS[v]["revision"]:
             raise ValueError("Model revision mismatch")
+    if any(row.get("execution") != "completed_in_space_GPU_function" for row in (base, heretic)):
+        return {
+            "case_id": base["case_id"],
+            "paired": False,
+            "status": "UNVERIFIED_NO_GPU_EXECUTION",
+            "quality_scored": False,
+            "refusal_scored": False,
+        }
     return {
         "case_id": base["case_id"],
         "paired": True,
