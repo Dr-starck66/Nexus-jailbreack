@@ -1,0 +1,2 @@
+SYNTHETIC FACT ONLY | file_protection_complete = True
+No customer or wallet data used.
