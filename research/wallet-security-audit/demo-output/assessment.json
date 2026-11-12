@@ -1,0 +1,52 @@
+{
+  "app_id": "org.astra.synthetic-wallet",
+  "assessment_id": "demo-only-20261112",
+  "controls": [
+    {
+      "declared_value": "plaintext_file",
+      "evidence_integrity": "PASS",
+      "evidence_sha256": "eaea8135f98093777aaffd9b9c8f8ddb7a151f53e9a676a39c6284a5ee0afbe1",
+      "limitation": "Evidence integrity only; app behavior not independently verified",
+      "name": "secret_storage"
+    },
+    {
+      "declared_value": false,
+      "evidence_integrity": "PASS",
+      "evidence_sha256": "89688193f44df4df5557a824a6f5f7188d14562a66bf45baf63dab765b285d20",
+      "limitation": "Evidence integrity only; app behavior not independently verified",
+      "name": "backup_exclusion"
+    },
+    {
+      "declared_value": true,
+      "evidence_integrity": "PASS",
+      "evidence_sha256": "5a02af6501a480e896f233e322f2232b9b7807bd5487c1073871a34bc4a556aa",
+      "limitation": "Evidence integrity only; app behavior not independently verified",
+      "name": "secrets_in_logs"
+    },
+    {
+      "declared_value": false,
+      "evidence_integrity": "PASS",
+      "evidence_sha256": "ec33cb960c2e670c47dd8a885dd3b42044952c2feafae27ed814b33dbef11ce3",
+      "limitation": "Evidence integrity only; app behavior not independently verified",
+      "name": "shared_app_group_secrets"
+    },
+    {
+      "declared_value": true,
+      "evidence_integrity": "PASS",
+      "evidence_sha256": "558af7974ada529fffcea1d3429004a76ce5465dbb1f416c34fe06822d2cf6ab",
+      "limitation": "Evidence integrity only; app behavior not independently verified",
+      "name": "file_protection_complete"
+    }
+  ],
+  "disclaimer": "Snapshot/evidence audit only; NOT a penetration test, iOS patch verification, or product certification.",
+  "evidence_gate": "PASS",
+  "ios_device_validation": "UNVERIFIED",
+  "mode": "synthetic",
+  "network_calls": false,
+  "required_evidence_count": 5,
+  "risk_screen": "HIGH_INDICATIVE",
+  "schema": "astra.nexus.wallet-audit.v1",
+  "secrets_read": false,
+  "verified_evidence_count": 5,
+  "worse_query_exploit_test": "NOT_PERFORMED"
+}

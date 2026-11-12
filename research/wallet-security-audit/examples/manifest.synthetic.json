@@ -1,0 +1,33 @@
+{
+  "schema": "astra.nexus.wallet-audit.v1",
+  "assessment_id": "demo-only-20261112",
+  "mode": "synthetic",
+  "app_id": "org.astra.synthetic-wallet",
+  "controls": {
+    "secret_storage": {
+      "value": "plaintext_file",
+      "evidence_path": "secret_storage.txt",
+      "sha256": "eaea8135f98093777aaffd9b9c8f8ddb7a151f53e9a676a39c6284a5ee0afbe1"
+    },
+    "backup_exclusion": {
+      "value": false,
+      "evidence_path": "backup_exclusion.txt",
+      "sha256": "89688193f44df4df5557a824a6f5f7188d14562a66bf45baf63dab765b285d20"
+    },
+    "secrets_in_logs": {
+      "value": true,
+      "evidence_path": "secrets_in_logs.txt",
+      "sha256": "5a02af6501a480e896f233e322f2232b9b7807bd5487c1073871a34bc4a556aa"
+    },
+    "shared_app_group_secrets": {
+      "value": false,
+      "evidence_path": "shared_app_group_secrets.txt",
+      "sha256": "ec33cb960c2e670c47dd8a885dd3b42044952c2feafae27ed814b33dbef11ce3"
+    },
+    "file_protection_complete": {
+      "value": true,
+      "evidence_path": "file_protection_complete.txt",
+      "sha256": "558af7974ada529fffcea1d3429004a76ce5465dbb1f416c34fe06822d2cf6ab"
+    }
+  }
+}
