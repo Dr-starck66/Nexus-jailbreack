@@ -33,13 +33,13 @@ jobs:
               def __init__(self):super().__init__();self.forms=[];self.tags=[];self.in_script=False;self.scripts=[]
               def handle_starttag(self,tag,attrs):
                   a=dict(attrs)
-                  if tag=='form':self.forms.append({k:a.get(k) for k in ('id','method','action','enctype','class')})
+                  if tag=='form':self.forms.append({'id':a.get('id'),'method':a.get('method'),'action_path':urlsplit(a.get('action') or '/').path,'enctype':a.get('enctype'),'class':a.get('class')})
                   if tag in ('div','form','input','button','textarea'):
                       cls=a.get('class','')
                       if re.search('dropzone|dz-|upload|fichiers',cls+' '+a.get('id',''),re.I):
                           self.tags.append({'tag':tag,'id':a.get('id'),'class':cls[:90],
-                             'action':a.get('action'),'method':a.get('method'),
-                             'data-url':a.get('data-url'),'data-action':a.get('data-action')})
+                             'action_path':urlsplit(a.get('action') or '/').path,'method':a.get('method'),'has_action_query':bool(urlsplit(a.get('action') or '/').query),
+                             'has_data_url':bool(a.get('data-url')),'has_data_action':bool(a.get('data-action'))})
                   if tag=='script' and not a.get('src'):self.in_script=True
               def handle_endtag(self,tag):
                   if tag=='script':self.in_script=False
