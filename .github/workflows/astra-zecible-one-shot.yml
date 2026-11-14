@@ -51,6 +51,34 @@ jobs:
                   "location_href":r"\blocation\.href\b",
               }
               output["static_flags"] = {name:{"present":bool(re.search(expr,text,re.I)), "line_count":sum(bool(re.search(expr,line,re.I)) for line in lines)} for name,expr in patterns.items()}
+              # Evidence-only local source tracing; string literals and comments are hidden
+              # from PUBLIC job logs. No network call is made during these inspections.
+              qlit = re.compile(r'''("(?:\\\\.|[^"\\\\])*"|'(?:\\\\.|[^'\\\\])*'|\x60(?:\\\\.|[^\x60\\\\])*\x60)''')
+              def redact(line):
+                  line = qlit.sub('"[redacted literal]"', line)
+                  line = re.sub(r"/\\*.*?\\*/|//.*$", "", line)
+                  return line.strip()[:220]
+              sink_indices = [i for i,line in enumerate(lines) if re.search(patterns["dom_sink"], line, re.I)]
+              form_indices = [i for i,line in enumerate(lines) if re.search(patterns["formdata"], line, re.I)]
+              nav_indices = [i for i,line in enumerate(lines) if re.search(patterns["location_href"], line, re.I)]
+              input_indices = [i for i,line in enumerate(lines) if re.search(r"\\b(?:getElementById|querySelector|addEventListener|\\.value\\b|\\.files\\b|onchange|onsubmit|JSON\\.parse|\\.responseText|\\.html\\s*\\(|\\.text\\s*\\()", line, re.I)]
+              selected = set()
+              for i in sink_indices:
+                  selected.update(range(max(0,i-18),min(len(lines),i+19)))
+              for i in form_indices:
+                  selected.update(range(max(0,i-8),min(len(lines),i+9)))
+              for i in nav_indices:
+                  selected.update(range(max(0,i-4),min(len(lines),i+5)))
+              for i in input_indices:
+                  selected.update(range(max(0,i-1),min(len(lines),i+2)))
+              output["flow"] = {
+                  "sink_line_numbers":[i+1 for i in sink_indices],
+                  "formdata_line_numbers":[i+1 for i in form_indices],
+                  "navigation_line_numbers":[i+1 for i in nav_indices],
+                  "input_candidate_line_numbers":[i+1 for i in input_indices],
+                  "sanitized_code_context":[{"line":i+1,"code":redact(lines[i])} for i in sorted(selected)[:130]],
+                  "interpretation":"sanitized code, not a security proof; string literals concealed",
+              }
               output["source_lines"] = len(lines)
               output["analysis_status"] = "PARTIAL"
           except (urllib.error.URLError, ValueError, TimeoutError) as e:
