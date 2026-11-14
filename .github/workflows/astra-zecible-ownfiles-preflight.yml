@@ -1,0 +1,64 @@
+name: ASTRA ZECIBLE own-files access-control preflight
+on:
+  push:
+    branches: [astra/zecible-public-runner-20261114]
+    paths: [.github/workflows/astra-zecible-ownfiles-preflight.yml]
+permissions:
+  contents: read
+jobs:
+  verify-public-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Inspect form destination and public Dropzone upload configuration (GET only)
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import urllib.request,urllib.error,re,hashlib,json,datetime
+          from html.parser import HTMLParser
+          from urllib.parse import urlsplit
+          UA='ASTRA-ZECIBLE-ScopedResearch/1.0 Drstarck'
+          HOST='ywh.fichiers.zecible.fr'
+          class NoRedirects(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self,req,fp,code,msg,headers,newurl):return None
+          op=urllib.request.build_opener(NoRedirects)
+          def get(path,maxsize):
+              url='https://'+HOST+path
+              req=urllib.request.Request(url,method='GET',headers={'User-Agent':UA,'Accept':'text/html,application/javascript,*/*'})
+              with op.open(req,timeout=12) as r:
+                  body=r.read(maxsize+1);status=r.status;ctype=r.headers.get('Content-Type','').split(';')[0]
+              if status!=200 or len(body)>maxsize:raise ValueError('unexpected response')
+              return body.decode('utf8','replace'),ctype,hashlib.sha256(body).hexdigest()
+          class P(HTMLParser):
+              def __init__(self):super().__init__();self.forms=[];self.tags=[];self.in_script=False;self.scripts=[]
+              def handle_starttag(self,tag,attrs):
+                  a=dict(attrs)
+                  if tag=='form':self.forms.append({k:a.get(k) for k in ('id','method','action','enctype','class')})
+                  if tag in ('div','form','input','button','textarea'):
+                      cls=a.get('class','')
+                      if re.search('dropzone|dz-|upload|fichiers',cls+' '+a.get('id',''),re.I):
+                          self.tags.append({'tag':tag,'id':a.get('id'),'class':cls[:90],
+                             'action':a.get('action'),'method':a.get('method'),
+                             'data-url':a.get('data-url'),'data-action':a.get('data-action')})
+                  if tag=='script' and not a.get('src'):self.in_script=True
+              def handle_endtag(self,tag):
+                  if tag=='script':self.in_script=False
+              def handle_data(self,data):
+                  if self.in_script and re.search(r'Dropzone|dropzoneParams|form_fichiers|\.options\.',data,re.I):
+                      lines=data.splitlines()
+                      keep=[(i,line.strip()) for i,line in enumerate(lines,1) if re.search(r'Dropzone|dropzoneParams|options|\.url|\.action',line,re.I)]
+                      self.scripts.extend([{'line_in_inline_script':i,'code_shape':re.sub(r'''(["'])(?:\\.|[^"'\\])*?\1''','[literal]',line)[:160]} for i,line in keep[:14]])
+          html,ct,h1=get('/',512000);js,ct2,h2=get('/fichiers.js',1048576)
+          p=P();p.feed(html)
+          j=js.splitlines()
+          select=set()
+          for i,line in enumerate(j):
+              if re.search(r'upload|Dropzone|dropzoneParams|url:|\.options|processQueue|formData|dz\.on\(',line,re.I):
+                  select.update(range(max(0,i-1),min(len(j),i+2)))
+          out={'timestamp_utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),'http_get_count':2,
+              'scope':HOST,'html_sha256':h1,'js_sha256':h2,'html_content_type':ct,'js_content_type':ct2,
+              'forms':p.forms,'dropzone_related_dom':p.tags[:20],'inline_script_signatures':p.scripts[:16],
+              'public_js_code_shapes':[{'line':i+1,'code_shape':re.sub(r'''(["'])(?:\\.|[^"'\\])*?\1''','[literal]',j[i].strip())[:180]} for i in sorted(select)[:85]],
+              'post_requests':0,'third_party_file_access':False,'vulnerability_confirmed':False}
+          print('ASTRA_OWNFILE_PREFLIGHT='+json.dumps(out,sort_keys=True))
+          PY
