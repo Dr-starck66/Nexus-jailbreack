@@ -1,0 +1,48 @@
+name: ASTRA ZECIBLE mydata form-action mapping
+on:
+  push:
+    branches: [astra/zecible-public-runner-20261114]
+    paths: [.github/workflows/astra-zecible-mydata-actions.yml]
+permissions:
+  contents: read
+jobs:
+  form-actions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: One public GET; report form structure only, no submission
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import urllib.request, urllib.error, json, datetime
+          from html.parser import HTMLParser
+          from urllib.parse import urlsplit
+          host='ywh.mydata.zecible.fr'
+          class NoRedirects(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self,req,fp,code,msg,headers,newurl): return None
+          class P(HTMLParser):
+              def __init__(self): super().__init__();self.forms=[];self.active=None
+              def handle_starttag(self,tag,attrs):
+                  a=dict(attrs)
+                  if tag=='form':
+                      p=urlsplit(a.get('action') or '/')
+                      self.active={'id':a.get('id'),'method':(a.get('method') or 'GET').upper(),
+                         'action_host':(p.netloc or host),'action_path':p.path,'has_query':bool(p.query),'fields':[]}
+                      self.forms.append(self.active)
+                  elif tag in ('input','textarea','select') and self.active is not None:
+                      self.active['fields'].append({'tag':tag,'type':a.get('type','') if tag=='input' else tag,
+                          'name':a.get('name'),'required':('required' in a)})
+              def handle_endtag(self,tag):
+                  if tag=='form':self.active=None
+          target='https://'+host+'/'
+          req=urllib.request.Request(target,method='GET',headers={'User-Agent':'ASTRA-ZECIBLE-ScopedResearch/1.0 Drstarck','Accept':'text/html'})
+          with urllib.request.build_opener(NoRedirects).open(req,timeout=12) as r:
+              code=r.status
+              ct=r.headers.get('Content-Type','').split(';')[0]
+              payload=r.read(131073)
+          if code!=200 or ct!='text/html' or len(payload)>131072: raise SystemExit('Unanalyzable public page; no form data emitted')
+          parser=P();parser.feed(payload.decode('utf-8','replace'))
+          print('ASTRA_MYDATA_FORM_ACTIONS='+json.dumps({'observed_at':datetime.datetime.now(datetime.timezone.utc).isoformat(),
+              'host':host,'forms':parser.forms,'http':code,'bytes':len(payload),
+              'no_form_submission':True,'no_personal_data_collected':True,'vulnerability_confirmed':False},sort_keys=True))
+          PY
