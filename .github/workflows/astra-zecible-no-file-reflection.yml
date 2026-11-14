@@ -1,0 +1,81 @@
+name: ASTRA ZECIBLE no-file error reflection (one request)
+on:
+  push:
+    branches: [astra/zecible-public-runner-20261114]
+    paths: [.github/workflows/astra-zecible-no-file-reflection.yml]
+permissions:
+  contents: read
+jobs:
+  single-negative-request:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: One unfulfillable upload request; no file, recipient, account, or personnel contact
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import urllib.request,urllib.error,urllib.parse,http.cookiejar,datetime,json,re,secrets,hashlib
+          from html.parser import HTMLParser
+          HOST='ywh.fichiers.zecible.fr'
+          ROOT='https://'+HOST+'/'
+          UA='ASTRA-ZECIBLE-ScopedResearch/1.0 Drstarck'
+          class NoRedirects(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self,req,fp,code,msg,headers,newurl):return None
+          class H(HTMLParser):
+              def __init__(self):super().__init__();self.action=None
+              def handle_starttag(self,tag,attrs):
+                  a=dict(attrs)
+                  if tag=='div' and a.get('id')=='dropzone-upload':
+                      self.action=a.get('action')
+          out={'utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),
+               'target_host':HOST,'purpose':'non-fulfillable negative control',
+               'file_attached':False,'recipient_provided':False,'email_provided':False,
+               'user_records_accessed':False,'vulnerability_confirmed':False}
+          cj=http.cookiejar.CookieJar()
+          op=urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj),NoRedirects)
+          try:
+              getreq=urllib.request.Request(ROOT,method='GET',headers={'User-Agent':UA,'Accept':'text/html'})
+              with op.open(getreq,timeout=12) as r:
+                  landing=r.read(150001);out['landing_status']=r.status
+              if len(landing)>150000:raise ValueError('landing_too_large')
+              parser=H();parser.feed(landing.decode('utf8','replace'))
+              if not parser.action:raise ValueError('missing_upload_action')
+              p=urllib.parse.urlsplit(urllib.parse.urljoin(ROOT,parser.action))
+              if p.scheme!='https' or p.hostname!=HOST or p.path!='/upload.php':
+                  raise ValueError('unapproved_destination')
+              # No multipart file, no email, and no contact-form data.
+              # The only field is a benign, researcher-generated value; server should reject it.
+              marker='ASTRA-OWN-NEGATIVE-'+secrets.token_hex(10)
+              boundary='astra_'+secrets.token_hex(9)
+              payload=('--'+boundary+'\\r\\nContent-Disposition: form-data; name="name"\\r\\n\\r\\n'+marker+
+                       '\\r\\n--'+boundary+'--\\r\\n').replace('\\r','\r').replace('\\n','\n').encode('utf8')
+              req=urllib.request.Request(p.geturl(),data=payload,method='POST',headers={
+                  'User-Agent':UA,'Accept':'application/json','Content-Type':'multipart/form-data; boundary='+boundary})
+              try:
+                  with op.open(req,timeout=12) as r:
+                      body=r.read(8193);out['post_status']=r.status
+                      out['mime']=r.headers.get('Content-Type','').split(';')[0]
+              except urllib.error.HTTPError as r:
+                  body=r.read(8193);out['post_status']=r.code
+                  out['mime']=r.headers.get('Content-Type','').split(';')[0]
+              if len(body)>8192:raise ValueError('error_response_too_large')
+              txt=body.decode('utf8','replace')
+              out['response_bytes']=len(body)
+              out['marker_reflected_anywhere']=marker in txt
+              out['marker_reflected_as_json_field']=False
+              if out['mime'] in ('application/json','text/json'):
+                  try:
+                      j=json.loads(txt)
+                      out['json_top_level_type']=type(j).__name__
+                      if isinstance(j,dict):
+                          out['json_keys']=sorted([k for k in j.keys() if re.fullmatch(r'[a-zA-Z0-9_]{1,30}',k)])[:16]
+                          out['marker_reflected_as_json_field']=any(marker in str(j.get(k,'')) for k in ('message','error','link'))
+                          out['server_success_flag']=j.get('success') if isinstance(j.get('success'),bool) else None
+                  except ValueError:
+                      out['json_parse']='invalid'
+              out['result']='PASS' if not out.get('server_success_flag',False) else 'UNEXPECTED_ACCEPTANCE'
+          except (urllib.error.HTTPError,urllib.error.URLError,TimeoutError,ValueError) as e:
+              out['result']='BLOCKED';out['error_type']=type(e).__name__
+          # Intentionally never log the session token, body, cookies, marker, or source URL.
+          print('ASTRA_NO_FILE_REFLECTION='+json.dumps(out,sort_keys=True))
+          PY
