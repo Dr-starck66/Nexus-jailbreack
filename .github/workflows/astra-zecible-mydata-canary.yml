@@ -1,0 +1,55 @@
+name: ASTRA ZECIBLE MyData harmless canary reflection
+on:
+  push:
+    branches: [astra/zecible-public-runner-20261114]
+    paths: [.github/workflows/astra-zecible-mydata-canary.yml]
+permissions:
+  contents: read
+jobs:
+  unique-search-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: One public GET with unique harmless marker; never print user records
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import urllib.request,urllib.error,urllib.parse,hashlib,secrets,datetime,json
+          from html.parser import HTMLParser
+          marker='ASTRA-ZECIBLE-OWN-'+secrets.token_hex(12)
+          url='https://ywh.mydata.zecible.fr/?'+urllib.parse.urlencode({'search':marker})
+          class NoRedirects(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self,request,fp,code,msg,headers,newurl):
+                  return None
+          class Tracer(HTMLParser):
+              def __init__(self):super().__init__();self.current=[];self.text=[];self.attributes=[];self.scripts=0
+              def handle_starttag(self,tag,attrs):
+                  self.current.append(tag)
+                  for k,v in attrs:
+                      if v and marker in v:self.attributes.append({'element':tag,'attribute_name':k})
+              def handle_endtag(self,tag):
+                  if self.current:self.current.pop()
+              def handle_data(self,data):
+                  if marker in data:
+                      self.text.append({'parent_element':self.current[-1] if self.current else None})
+                      if 'script' in self.current:self.scripts+=1
+          out={'target_host':'ywh.mydata.zecible.fr','type':'single benign search input','no_upload':True,'no_account':True,
+               'no_staff_contact':True,'no_user_records_logged':True,'vulnerability_confirmed':False,
+               'time_utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),
+               'marker_sha256':hashlib.sha256(marker.encode()).hexdigest()}
+          try:
+              req=urllib.request.Request(url,headers={'User-Agent':'ASTRA-ZECIBLE-ScopedResearch/1.0 Drstarck','Accept':'text/html'},method='GET')
+              with urllib.request.build_opener(NoRedirects).open(req,timeout=10) as resp:
+                  out['http_status']=resp.status;out['content_type']=resp.headers.get('Content-Type','').split(';')[0]
+                  body=resp.read(131073)
+              if len(body)>131072:raise ValueError('response_too_large')
+              if out['http_status']!=200 or out['content_type']!='text/html':raise ValueError('unexpected_response')
+              text=body.decode('utf8','replace');t=Tracer();t.feed(text)
+              out['response_bytes']=len(body);out['marker_present_raw']=marker in text
+              out['marker_text_occurrences']=t.text[:6];out['marker_attribute_occurrences']=t.attributes[:6]
+              out['marker_in_script_count']=t.scripts
+              out['status']='PARTIAL'
+          except (urllib.error.URLError,TimeoutError,ValueError) as e:
+              out['status']='BLOCKED';out['error_type']=type(e).__name__
+          print('ASTRA_MYDATA_CANARY_RESULT='+json.dumps(out,sort_keys=True))
+          PY
