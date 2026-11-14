@@ -1,0 +1,62 @@
+name: ASTRA ZECIBLE one-shot public JS audit
+
+on:
+  push:
+    branches:
+      - astra/zecible-public-runner-20261114
+    paths:
+      - .github/workflows/astra-zecible-one-shot.yml
+
+permissions:
+  contents: read
+
+jobs:
+  safe-public-js:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Verify public JavaScript via one scoped GET (no user data)
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import datetime, hashlib, json, re, urllib.request, urllib.error
+          url = "https://ywh.fichiers.zecible.fr/fichiers.js"
+          ua = "ASTRA-ZECIBLE-ScopedResearch/1.0 Drstarck"
+          class NoRedirects(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self, req, fp, code, msg, headers, newurl):
+                  return None
+          req = urllib.request.Request(url, headers={"User-Agent":ua, "Accept":"text/javascript"}, method="GET")
+          output = {"time_utc":datetime.datetime.now(datetime.timezone.utc).isoformat(),"target":url,"request_method":"GET","redirects_followed":False,"vulnerability_confirmed":False}
+          try:
+              with urllib.request.build_opener(NoRedirects).open(req, timeout=12) as resp:
+                  output["http_status"] = resp.status
+                  output["content_type"] = resp.headers.get("Content-Type", "").split(";")[0]
+                  payload = resp.read(1048577)
+              if len(payload) > 1048576: raise ValueError("response_limit_exceeded")
+              if output["http_status"] != 200: raise ValueError("unexpected_http_status")
+              if output["content_type"] not in ("text/javascript","application/javascript","application/x-javascript","text/plain","application/octet-stream"):
+                  raise ValueError("unexpected_content_type")
+              output["byte_count"] = len(payload)
+              output["sha256"] = hashlib.sha256(payload).hexdigest()
+              text = payload.decode("utf-8", "replace")
+              lines = text.splitlines()
+              patterns = {
+                  "formdata": r"\bFormData\b",
+                  "dom_sink": r"\binnerHTML\s*=|\bdocument\.write\s*\(|\beval\s*\(",
+                  "file_identifier":r"\bfile(?:id|Id|_id)?\b|\b(?:uuid|downloadToken|shareToken)\b",
+                  "xhr":r"\bXMLHttpRequest\b",
+                  "fetch":r"\bfetch\s*\(",
+                  "jquery_ajax":r"\$\s*\.\s*(?:ajax|get|post)\s*\(",
+                  "url_query":r"\bURLSearchParams\b|\blocation\.search\b",
+                  "location_href":r"\blocation\.href\b",
+              }
+              output["static_flags"] = {name:{"present":bool(re.search(expr,text,re.I)), "line_count":sum(bool(re.search(expr,line,re.I)) for line in lines)} for name,expr in patterns.items()}
+              output["source_lines"] = len(lines)
+              output["analysis_status"] = "PARTIAL"
+          except (urllib.error.URLError, ValueError, TimeoutError) as e:
+              output["analysis_status"] = "BLOCKED"
+              output["error_type"] = type(e).__name__
+              output["error_detail"] = str(e)[:96]
+          print("ASTRA_PUBLIC_JS_RESULT="+json.dumps(output,sort_keys=True))
+          if output["analysis_status"] != "PARTIAL": raise SystemExit(2)
+          PY
