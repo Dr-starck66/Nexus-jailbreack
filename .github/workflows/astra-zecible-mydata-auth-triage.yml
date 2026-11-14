@@ -1,0 +1,56 @@
+name: ASTRA ZECIBLE mydata authentication surface triage
+on:
+  push:
+    branches:
+      - astra/zecible-public-runner-20261114
+    paths:
+      - .github/workflows/astra-zecible-mydata-auth-triage.yml
+permissions:
+  contents: read
+jobs:
+  public-entry-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Inspect only public entry page for login indicators
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import datetime, json, urllib.request, urllib.error, re
+          from html.parser import HTMLParser
+          url="https://ywh.mydata.zecible.fr/"
+          class NoRedirects(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self,req,fp,code,msg,headers,newurl):
+                  return None
+          class P(HTMLParser):
+              def __init__(self):
+                  super().__init__(); self.forms=0; self.password=0; self.inputs=0; self.scripts=0; self.links=0; self.login_link=0; self.logout_link=0
+              def handle_starttag(self,tag,attrs):
+                  a=dict(attrs)
+                  if tag=="form": self.forms+=1
+                  if tag=="input":
+                      self.inputs+=1
+                      if a.get("type","").lower()=="password": self.password+=1
+                  if tag=="script": self.scripts+=1
+                  if tag=="a":
+                      self.links+=1
+                      u=a.get("href","").lower()
+                      if re.search(r"(^|[/=?])(?:login|signin|connexion)([/=?#]|$)",u): self.login_link+=1
+                      if re.search(r"(^|[/=?])(?:logout|signout|deconnexion)([/=?#]|$)",u): self.logout_link+=1
+          output={"target_host":"ywh.mydata.zecible.fr","read_only":True,"no_auth":True,"test_payload_sent":False,"timestamp":datetime.datetime.now(datetime.timezone.utc).isoformat()}
+          try:
+              req=urllib.request.Request(url,method="GET",headers={"User-Agent":"ASTRA-ZECIBLE-ScopedResearch/1.0 Drstarck","Accept":"text/html"})
+              with urllib.request.build_opener(NoRedirects).open(req,timeout=12) as response:
+                  output["http"]=response.status;output["mime"]=response.headers.get("Content-Type","").split(";")[0]
+                  if response.status!=200 or output["mime"]!="text/html":raise ValueError("unexpected_page")
+                  data=response.read(131073)
+              if len(data)>131072:raise ValueError("too_large")
+              p=P();p.feed(data.decode("utf-8","replace"))
+              output["form_count"]=p.forms;output["password_inputs"]=p.password;output["input_count"]=p.inputs;output["script_tag_count"]=p.scripts
+              output["login_path_links"]=p.login_link;output["logout_path_links"]=p.logout_link
+              output["bytes_examined"]=len(data);output["security_impact_proven"]=False
+              output["status"]="PARTIAL"
+          except (ValueError,urllib.error.HTTPError,urllib.error.URLError,TimeoutError) as e:
+              output["status"]="BLOCKED";output["exception_type"]=type(e).__name__
+          print("ASTRA_MYDATA_ENTRY="+json.dumps(output,sort_keys=True))
+          PY
