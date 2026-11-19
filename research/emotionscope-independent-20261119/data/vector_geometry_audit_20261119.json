@@ -1,0 +1,35 @@
+{
+  "status": "PASS_REAL_VECTOR_GEOMETRY_ONLY",
+  "source": "https://github.com/saanidhi-git/EmotionScope/blob/main/results/vectors/google_gemma-2-2b-it.pt",
+  "artifact_sha256": "e56af36b8d1ed5695694111ade1706453a1f65c6e145836cac872d9cb9c33cf2",
+  "artifact_bytes": 557092,
+  "model_info": {
+    "backend": "transformer_lens",
+    "d_model": 2304,
+    "model_name": "google/gemma-2-2b-it",
+    "n_layers": 26,
+    "probe_layer": 22
+  },
+  "n_vectors": 20,
+  "vector_dim": 2304,
+  "min_l2_norm": 0.9999998838496597,
+  "max_l2_norm": 1.0000000976623329,
+  "mean_off_diagonal_cosine": -0.05056034736842105,
+  "proxy_stress_norm": 0.9773066948655829,
+  "proxy_shortcut_norm": 1.0776570277034785,
+  "proxy_stress_vs_shortcut_cosine": 0.9081391073372861,
+  "selected_cosines": {
+    "angry__hostile": 0.6194800227244098,
+    "angry__frustrated": 0.603439428650021,
+    "afraid__nervous": 0.12834306121477035,
+    "calm__confident": -0.09493189752589426,
+    "desperate__nervous": -0.01819116348803798,
+    "hostile__frustrated": 0.24263124569651545
+  },
+  "limitations": [
+    "No Gemma model inference performed",
+    "No 48-item neural scores computed",
+    "No head-to-head against Gemma-compatible NEXUS probe",
+    "The two frozen proxy directions are strongly correlated"
+  ]
+}
