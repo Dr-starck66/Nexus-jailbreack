@@ -1,0 +1,33 @@
+{
+  "dataset_sha256": "8232df54439b90e2ef8f1dde2acd5b5d52e95f6cadfcfc60da6ea67d766d4d3b",
+  "n_items": 48,
+  "n_matched_pairs_per_target": 24,
+  "n_scenarios": 12,
+  "results": {
+    "bow_lexical_null": {
+      "shortcut": {
+        "losses": 0,
+        "paired_concordance": 0.5,
+        "scenario_bootstrap_95ci": [
+          0.5,
+          0.5
+        ],
+        "ties": 24,
+        "two_sided_exact_sign_p": 1,
+        "wins": 0
+      },
+      "stress": {
+        "losses": 0,
+        "paired_concordance": 0.5,
+        "scenario_bootstrap_95ci": [
+          0.5,
+          0.5
+        ],
+        "ties": 24,
+        "two_sided_exact_sign_p": 1,
+        "wins": 0
+      }
+    }
+  },
+  "score_direction": "larger=more of target"
+}
