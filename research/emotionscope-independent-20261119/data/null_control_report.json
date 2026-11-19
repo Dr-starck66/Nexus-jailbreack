@@ -6,23 +6,27 @@
   "results": {
     "bow_lexical_null": {
       "shortcut": {
+        "holm_adjusted_p": 1,
         "losses": 0,
         "paired_concordance": 0.5,
         "scenario_bootstrap_95ci": [
           0.5,
           0.5
         ],
+        "scenario_signs_n": 12,
         "ties": 24,
         "two_sided_exact_sign_p": 1,
         "wins": 0
       },
       "stress": {
+        "holm_adjusted_p": 1,
         "losses": 0,
         "paired_concordance": 0.5,
         "scenario_bootstrap_95ci": [
           0.5,
           0.5
         ],
+        "scenario_signs_n": 12,
         "ties": 24,
         "two_sided_exact_sign_p": 1,
         "wins": 0

@@ -49,6 +49,13 @@ def paired_diffs(items, scores, target):
     if len(groups) != 24: raise ValueError('Expected 24 matched pairs')
     return {k: g[1] - g[0] for k, g in groups.items()}
 
+def scenario_mean_diffs(differences):
+    grouped = defaultdict(list)
+    for (scenario, _), d in differences.items(): grouped[scenario].append(d)
+    if len(grouped) != 12 or any(len(v) != 2 for v in grouped.values()):
+        raise ValueError('Expected 12 scenario clusters with 2 pairs each')
+    return {scenario: sum(v) / len(v) for scenario, v in grouped.items()}
+
 def concordance(ds):
     values = list(ds)
     return sum(1 if v > 0 else (0.5 if v == 0 else 0) for v in values) / len(values)
@@ -83,12 +90,20 @@ def evaluate(items, scores, digest):
             d = paired_diffs(items, sc, target)
             report['results'][method][target] = {
                 'paired_concordance': concordance(d.values()),
-                'two_sided_exact_sign_p': sign_p_two_sided(d.values()),
+                'two_sided_exact_sign_p': sign_p_two_sided(scenario_mean_diffs(d).values()),
+                'scenario_signs_n': 12,
                 'scenario_bootstrap_95ci': bootstrap_by_scenario(d),
                 'wins': sum(v > 0 for v in d.values()),
                 'losses': sum(v < 0 for v in d.values()),
                 'ties': sum(v == 0 for v in d.values()),
             }
+        # Holm's step-down family-wise correction for two co-primary targets.
+        ordered = sorted(TARGETS, key=lambda k: report['results'][method][k]['two_sided_exact_sign_p'])
+        floor = 0.0
+        for rank, target in enumerate(ordered):
+            raw = report['results'][method][target]['two_sided_exact_sign_p']
+            floor = max(floor, min(1.0, (len(TARGETS) - rank) * raw))
+            report['results'][method][target]['holm_adjusted_p'] = floor
     return report
 
 def main():

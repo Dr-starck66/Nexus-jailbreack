@@ -5,7 +5,7 @@ import tempfile
 import unittest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from make_dataset import build, validate, bag
-from evaluate import concordance, sign_p_two_sided, paired_diffs, load_items, load_scores, evaluate
+from evaluate import concordance, sign_p_two_sided, paired_diffs, scenario_mean_diffs, load_items, load_scores, evaluate
 from make_null_scores import create
 ROOT = Path(__file__).resolve().parents[1]
 class IndependentBenchmarkTests(unittest.TestCase):
@@ -34,7 +34,7 @@ class IndependentBenchmarkTests(unittest.TestCase):
             ds=paired_diffs(items,scores,target)
             self.assertEqual(len(ds),24)
             self.assertEqual(concordance(ds.values()),1.)
-            self.assertLess(sign_p_two_sided(ds.values()),0.000001)
+            self.assertLess(sign_p_two_sided(scenario_mean_diffs(ds).values()),0.001)
     def test_reversed_score(self):
         items=build(); scores={r['id']:{'shortcut':-r['shortcut'],'stress':-r['stress']} for r in items}
         self.assertEqual(concordance(paired_diffs(items,scores,'shortcut').values()),0.)

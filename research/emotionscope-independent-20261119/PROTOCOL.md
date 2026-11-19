@@ -24,7 +24,7 @@ These combinations were selected *before* any Gemma run and must not be retrospe
 
 ## Primary estimand and inferential test
 
-For each target and 24 pairs compute `d = score(1) − score(0)`; concordance = `(wins + 0.5*ties)/24`. 0.5 is chance. Exact two-sided sign test on non-ties; ties are *reported*, not discarded from concordance. Grouped nonparametric bootstrap: sample the 12 scenarios with replacement 5,000 times, fixed RNG seed 20261119; report percentile 95% interval. Both co-primary p-values must be adjusted by **Holm (family of two)** for claims of significance at 0.05. Report raw unadjusted p first; no post hoc significance claims on secondary analyses. With only 12 scenarios, CIs are descriptive/unstable.
+For each target and 24 pairs compute `d = score(1) − score(0)`; concordance = `(wins + 0.5*ties)/24`. 0.5 is chance. Exact two-sided sign test on **12 scenario-level means** (each mean aggregates its 2 crossed matched-pair differences), excluding zero-mean ties. Do not treat 24 crossed pairs as independent for inferential p-values; item-level ties remain reported in concordance. Grouped nonparametric bootstrap: sample the 12 scenarios with replacement 5,000 times, fixed RNG seed 20261119; report percentile 95% interval. Both co-primary p-values are adjusted in `evaluate.py` by **Holm (family of two)** for claims of significance at 0.05. Report raw unadjusted p first; no post hoc significance claims on secondary analyses. With only 12 scenarios, CIs are descriptive/unstable.
 
 ## Negative, adverse and sensitivity controls
 
