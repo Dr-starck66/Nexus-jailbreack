@@ -8,7 +8,9 @@
     "build": "vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "test:security": "node --test tools/nexus-supply-chain-guard.test.mjs",
+    "security:gate": "node tools/nexus-supply-chain-guard.mjs"
   },
   "dependencies": {
     "@google/genai": "^1.29.0",
